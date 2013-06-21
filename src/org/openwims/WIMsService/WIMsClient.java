@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import static org.openwims.WIMsService.WIMsService.DEFAULT_PORT;
 
 /**
  * For testing the WIMsService
@@ -19,50 +20,34 @@ import java.net.UnknownHostException;
 public class WIMsClient {
     
     public static void main(String[] args) throws Exception {
-//        int port = Integer.parseInt(args[0]);
-        int port = 9250;
-        
-        Socket echoSocket = null;
-        PrintWriter out = null;
-        BufferedReader in = null;
-
-        try {
-            echoSocket = new Socket("localhost", port);
-            out = new PrintWriter(echoSocket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-
-            out.println("{\"ver\": \"1.0\", \"text\": \"The man hit the building.\"}");
-            out.flush();
-            
-            System.out.println("here");
-            
-            System.out.println(in.readLine());
-            
-            
-            in.close();
-            echoSocket.close();
-            
-        } catch (UnknownHostException e) {
-            System.err.println("Don't know about host: localhost.");
-            System.exit(1);
-        } catch (IOException e) {
-            System.err.println("Couldn't get I/O for the connection to: localhost.");
-            System.exit(1);
+        //Identify the port
+        int port = DEFAULT_PORT;
+        for (String arg : args) {
+            if (arg.startsWith("port=")) {
+                port = Integer.parseInt(arg.replaceAll("port=", ""));
+                break;
+            }
         }
         
-        
-        
-        
+        String message = "{\"process-request\": \"parse\", \"ver\": \"1.0\", \"text\": \"The man hit the building.\"}";
+        String response = message(port, message);
+        System.out.println(response);
+    }
+    
+    public static String message(int port, String message) throws Exception {
+        Socket echoSocket = new Socket("localhost", port);
+        PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
+        BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
 
-//	BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-//	String userInput;
-//
-//	while ((userInput = stdIn.readLine()) != null) {
-//	    out.println(userInput);
-//	    System.out.println("echo: " + in.readLine());
-//	}
+        out.println(message);
+        out.flush();
 
-	
+        String response = in.readLine();
+
+        in.close();
+        echoSocket.close();
+        
+        return response;
     }
     
 }
